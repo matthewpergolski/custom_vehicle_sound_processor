@@ -1,0 +1,10 @@
+[theme]
+# Primary accent color (Muted Blue/Grey)
+primaryColor = "#507d96"
+
+# Background colors (Solarized Base03 and Base02)
+backgroundColor = "#002b36"
+secondaryBackgroundColor = "#073642"
+
+# Text colors (Solarized Base1 and Base01)
+textColor = "#93a1a1"
