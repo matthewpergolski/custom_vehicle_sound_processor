@@ -6,19 +6,18 @@ from pathlib import Path
 import shutil
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-OUTPUT_DIR = Path("./custom_sounds")
-ALLOWED_TYPES = ['mp3', 'wav', 'mov', 'mp4', 'm4a']
-
-st.set_page_config(
-    page_title="Vehicle Sound Processor",
-    page_icon="🔊",
-    layout="wide"
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+OUTPUT_DIR = Path("./custom_sounds")
+ALLOWED_TYPES = ["mp3", "wav", "mov", "mp4", "m4a"]
+
+st.set_page_config(page_title="Vehicle Sound Processor", page_icon="🔊", layout="wide")
+
 # Custom CSS remains necessary for specific styling overrides
-st.markdown("""
+st.markdown(
+    """
     <style>
         .block-container {
             padding-top: 2rem; padding-bottom: 3rem; padding-left: 1rem; padding-right: 1rem;
@@ -73,7 +72,9 @@ st.markdown("""
         .stException strong { color: #ffaaaa; }
         .stSlider [data-baseweb="slider"] { margin-top: 0.5rem; margin-bottom: 1rem; }
     </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 def load_audio_file(file_path: Path, file_type: str = None) -> AudioSegment | None:
@@ -88,7 +89,10 @@ def load_audio_file(file_path: Path, file_type: str = None) -> AudioSegment | No
         logging.error(f"Error loading audio file {file_path}: {e}", exc_info=True)
         return None
 
-def save_audio(audio_segment: AudioSegment, output_path: Path, format: str = 'wav') -> bool:
+
+def save_audio(
+    audio_segment: AudioSegment, output_path: Path, format: str = "wav"
+) -> bool:
     """Save audio segment to the specified path and format."""
     try:
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -100,10 +104,14 @@ def save_audio(audio_segment: AudioSegment, output_path: Path, format: str = 'wa
         logging.error(f"Error saving audio file {output_path}: {e}", exc_info=True)
         return False
 
+
 def create_unique_output_directory(base_name: str) -> Path | None:
     """Create a unique directory under OUTPUT_DIR for the output files."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    sanitized_base = "".join(c if c.isalnum() or c in ('_', '-') else '_' for c in base_name.replace(' ', '_'))
+    sanitized_base = "".join(
+        c if c.isalnum() or c in ("_", "-") else "_"
+        for c in base_name.replace(" ", "_")
+    )
     if not sanitized_base:
         sanitized_base = "output"
 
@@ -119,21 +127,27 @@ def create_unique_output_directory(base_name: str) -> Path | None:
         return output_path
     except Exception as e:
         st.error(f"Error creating output directory: {e}")
-        logging.error(f"Error creating output directory {output_path}: {e}", exc_info=True)
+        logging.error(
+            f"Error creating output directory {output_path}: {e}", exc_info=True
+        )
         return None
 
+
 def main():
-    st.markdown("""
+    st.markdown(
+        """
         <div class="header-container">
             <div class="header-text">Vehicle Sound Processor</div>
             <div class="subheader-text">Create custom lock sounds for your vehicle</div>
         </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     uploaded_file = st.file_uploader(
         "1. Upload Audio or Video",
         type=ALLOWED_TYPES,
-        help=f"Supported formats: {', '.join(ALLOWED_TYPES)}"
+        help=f"Supported formats: {', '.join(ALLOWED_TYPES)}",
     )
 
     if uploaded_file:
@@ -146,7 +160,9 @@ def main():
         preview_temp_path = None
         try:
             # Handle uploaded file temporarily
-            with tempfile.NamedTemporaryFile(delete=False, suffix=file_suffix) as tmp_file:
+            with tempfile.NamedTemporaryFile(
+                delete=False, suffix=file_suffix
+            ) as tmp_file:
                 shutil.copyfileobj(uploaded_file, tmp_file)
                 temp_path = Path(tmp_file.name)
                 logging.info(f"Uploaded file saved temporarily to: {temp_path}")
@@ -155,7 +171,9 @@ def main():
                 audio = load_audio_file(temp_path)
 
             if audio:
-                st.markdown('<div class="processing-container">', unsafe_allow_html=True)
+                st.markdown(
+                    '<div class="processing-container">', unsafe_allow_html=True
+                )
                 st.subheader("2. Trim Audio")
 
                 duration_sec = len(audio) / 1000
@@ -165,9 +183,9 @@ def main():
                     "Select time range (seconds):",
                     min_value=0.0,
                     max_value=duration_sec,
-                    value=(0.0, duration_sec), # Default to full duration
+                    value=(0.0, duration_sec),  # Default to full duration
                     step=0.1,
-                    format="%.1fs"
+                    format="%.1fs",
                 )
 
                 selected_duration = end_time - start_time
@@ -179,14 +197,19 @@ def main():
                 trimmed_audio = audio[start_ms:end_ms]
 
                 # Generate preview
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as tmp_preview_file:
+                with tempfile.NamedTemporaryFile(
+                    delete=False, suffix=".wav"
+                ) as tmp_preview_file:
                     preview_temp_path = Path(tmp_preview_file.name)
-                    if save_audio(trimmed_audio, preview_temp_path, format='wav'):
+                    if save_audio(trimmed_audio, preview_temp_path, format="wav"):
                         try:
                             st.audio(str(preview_temp_path))
                         except Exception as e:
                             st.error(f"Could not play preview: {e}")
-                            logging.error(f"Error playing preview file {preview_temp_path}: {e}", exc_info=True)
+                            logging.error(
+                                f"Error playing preview file {preview_temp_path}: {e}",
+                                exc_info=True,
+                            )
                             preview_temp_path = None
                     else:
                         st.error("Could not generate audio preview.")
@@ -205,19 +228,29 @@ def main():
                             save_ok = True
                             try:
                                 shutil.copy2(temp_path, original_dest_path)
-                                logging.info(f"Original file copied to: {original_dest_path}")
+                                logging.info(
+                                    f"Original file copied to: {original_dest_path}"
+                                )
                             except Exception as e:
                                 st.error(f"Error copying original file: {e}")
-                                logging.error(f"Error copying {temp_path} to {original_dest_path}: {e}", exc_info=True)
+                                logging.error(
+                                    f"Error copying {temp_path} to {original_dest_path}: {e}",
+                                    exc_info=True,
+                                )
                                 save_ok = False
 
-                            if save_ok and not save_audio(trimmed_audio, processed_lockchime_path):
+                            if save_ok and not save_audio(
+                                trimmed_audio, processed_lockchime_path
+                            ):
                                 save_ok = False
-                            if save_ok and not save_audio(trimmed_audio, processed_named_path):
+                            if save_ok and not save_audio(
+                                trimmed_audio, processed_named_path
+                            ):
                                 save_ok = False
 
                             if save_ok:
-                                st.markdown(f"""
+                                st.markdown(
+                                    f"""
                                     <div class="success-message">
                                         <h3>✅ Files saved successfully!</h3>
                                         <p>Output Location: <code>{output_dir}</code></p>
@@ -227,13 +260,21 @@ def main():
                                             <li>Named WAV: <code>{processed_named_path.name}</code></li>
                                         </ul>
                                     </div>
-                                """, unsafe_allow_html=True)
+                                """,
+                                    unsafe_allow_html=True,
+                                )
                             else:
-                                st.error("An error occurred while saving one or more files.")
+                                st.error(
+                                    "An error occurred while saving one or more files."
+                                )
                         else:
-                             st.error("Could not create output directory. Saving failed.")
+                            st.error(
+                                "Could not create output directory. Saving failed."
+                            )
 
-                st.markdown('</div>', unsafe_allow_html=True) # Close processing-container
+                st.markdown(
+                    "</div>", unsafe_allow_html=True
+                )  # Close processing-container
 
         except Exception as e:
             st.error("An unexpected error occurred during processing.")
@@ -245,13 +286,18 @@ def main():
                     os.unlink(temp_path)
                     logging.info(f"Cleaned up temp upload: {temp_path}")
                 except Exception as e:
-                     logging.warning(f"Could not delete temp upload file {temp_path}: {e}")
+                    logging.warning(
+                        f"Could not delete temp upload file {temp_path}: {e}"
+                    )
             if preview_temp_path and preview_temp_path.exists():
-                 try:
+                try:
                     os.unlink(preview_temp_path)
                     logging.info(f"Cleaned up temp preview: {preview_temp_path}")
-                 except Exception as e:
-                    logging.warning(f"Could not delete temp preview file {preview_temp_path}: {e}")
+                except Exception as e:
+                    logging.warning(
+                        f"Could not delete temp preview file {preview_temp_path}: {e}"
+                    )
+
 
 if __name__ == "__main__":
     main()
